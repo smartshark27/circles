@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Circles</title>
+</head>
+
+<body>
+
+    <svg id="canvas"
+        style="touch-action: manipulation; position: absolute; left: 0; top: 0; font-family: 'Lucida Console', Monaco, monospace;"
+        onload="fitToScreen()" onresize="fitToScreen()" onclick="handleCanvasClick(event)">
+        <rect id="background" x="0" y="0" width="1" height="1" fill="white">
+        </rect>
+        <text id="messageTextbox" dominant-baseline="middle" text-anchor="middle" x="50%" y="50%" font-size="16">Tap the
+            screen</text>
+    </svg>
+
+    <script>
+        const FPS = 60;
+
+        const GROW_INTERVAL = Math.floor(1000 / FPS);
+        const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
+        var prevColorIndex = colors.length;
+
+        function fitToScreen() {
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+
+            const canvas = document.getElementById('canvas');
+            canvas.setAttribute('width', width);
+            canvas.setAttribute('height', height);
+
+            const background = document.getElementById('background');
+            background.setAttribute('width', width);
+            background.setAttribute('height', height);
+        }
+
+        function handleCanvasClick(event) {
+            removeMessage();
+            const clickX = event.offsetX;
+            const clickY = event.offsetY;
+            spawnCircle(clickX, clickY);
+        }
+
+        function spawnCircle(clickX, clickY) {
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttributeNS(null, 'cx', clickX);
+            circle.setAttributeNS(null, 'cy', clickY);
+            circle.setAttributeNS(null, 'r', 1);
+            circle.setAttributeNS(null, 'fill', nextColor());
+            document.getElementById("canvas").appendChild(circle);
+            startGrowing(circle);
+        }
+
+        function nextColor() {
+            var colorIndex = prevColorIndex;
+            colorIndex = (prevColorIndex + 1 >= colors.length - 1) ? 0 : prevColorIndex + 1;
+            prevColorIndex = colorIndex;
+            return colors[colorIndex];
+        }
+
+        async function startGrowing(circle) {
+            console.log("A circle started growing");
+            var coveringScreen = false;
+            while (!coveringScreen) {
+                await sleep(GROW_INTERVAL);
+                grow(circle);
+                if (isCoveringScreen(circle)) {
+                    coveringScreen = true;
+                }
+            }
+            console.log("A circle stopped growing");
+            setBackgroundToCircleColor(circle);
+            circle.remove();
+            console.log("A circle was removed");
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function grow(circle) {
+            radius = Number(circle.getAttribute('r'));
+            circle.setAttribute('r', radius + 1);
+        }
+
+        function isCoveringScreen(circle) {
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const circleDiameter = Number(circle.getAttribute('r'));
+            return circleDiameter > windowWidth + windowHeight;
+        }
+
+        function setBackgroundToCircleColor(circle) {
+            color = circle.getAttribute('fill');
+            background = document.getElementById('background');
+            background.setAttribute('fill', color);
+        }
+
+        function removeMessage() {
+            messageTextbox = document.getElementById("messageTextbox");
+            messageTextbox.textContent = "";
+        }
+    </script>
+
+</body>
+
+</html>
