@@ -10,7 +10,8 @@
 
     <svg id="canvas"
         style="touch-action: manipulation; position: absolute; left: 0; top: 0; font-family: 'Lucida Console', Monaco, monospace;"
-        onload="fitToScreen()" onresize="fitToScreen()" onclick="handleCanvasClick(event)">
+        onload="fitToScreen()" onresize="fitToScreen()" onmousemove="handleMouseMove(event)" onmouseup="handleMouseUp()"
+        onmousedown="handleMouseDown()">
         <rect id="background" x="0" y="0" width="1" height="1" fill="white">
         </rect>
         <text id="messageTextbox" dominant-baseline="middle" text-anchor="middle" x="50%" y="50%" font-size="16">Tap the
@@ -19,10 +20,10 @@
 
     <script>
         const FPS = 60;
-
-        const GROW_INTERVAL = Math.floor(1000 / FPS);
+        const MOUSE_DOWN_SPAWN_DELAY_MS = 300;
         const colors = ["red", "orange", "yellow", "green", "blue", "indigo", "violet"];
         var prevColorIndex = colors.length;
+        var mouseX, mouseY;
 
         function fitToScreen() {
             const width = window.innerWidth;
@@ -37,11 +38,22 @@
             background.setAttribute('height', height);
         }
 
-        function handleCanvasClick(event) {
+        function handleMouseMove(event) {
+            mouseX = event.offsetX;
+            mouseY = event.offsetY;
+        }
+
+        function handleMouseUp() {
+            mouseDown = false;
+        }
+
+        async function handleMouseDown() {
             removeMessage();
-            const clickX = event.offsetX;
-            const clickY = event.offsetY;
-            spawnCircle(clickX, clickY);
+            mouseDown = true;
+            while (mouseDown) {
+                spawnCircle(mouseX, mouseY);
+                await sleep(MOUSE_DOWN_SPAWN_DELAY_MS);
+            }
         }
 
         function spawnCircle(clickX, clickY) {
@@ -65,7 +77,7 @@
             console.log("A circle started growing");
             var coveringScreen = false;
             while (!coveringScreen) {
-                await sleep(GROW_INTERVAL);
+                await sleep(Math.floor(1000 / FPS));
                 grow(circle);
                 if (isCoveringScreen(circle)) {
                     coveringScreen = true;
